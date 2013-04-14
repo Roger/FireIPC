@@ -1,0 +1,10 @@
+{
+  "name": "FireIPC",
+  "fullName": "FireIPC",
+  "id": "jid1-AY0v91H70RsqTw",
+  "description": "ipc powers in firefox",
+  "author": "roger",
+  "contributors": "dx",
+  "license": "MPL 2.0",
+  "version": "0.1.0"
+}
