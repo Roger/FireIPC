@@ -1,14 +1,42 @@
-var GM_callbacks = [];
-unsafeWindow.rpc_emit = function(message){
-  self.port.emit('GM_rpc_emit', message);
-}
+document.addEventListener("fireipc_handshake",
+  function handshake(event){
+    // ignore self messages
+    if(event.detail.sender == "addon") return;
 
-unsafeWindow.rpc_on = function(func){
-  GM_callbacks.push(func);
-}
+    self.port.emit("handshake", event.detail);
+    // HandShake started, stop listenning for new handshakes in this worker
+    document.removeEventListener("fireipc_handshake", handshake, false);
+  }, false);
 
-self.port.on('GM_rpc_data', function(data) {
-  for(var i in GM_callbacks){
-    GM_callbacks[i](data);
-  }
+
+self.port.on("handshake_accept", function(message){
+  var name = message.name;
+  var uuid = message.uuid;
+
+  // start listenning in the new channel
+  document.addEventListener("fireipc_"+message.uuid, function(event){
+    // ignore self messages
+    if(event.detail.sender == "addon") return;
+    self.port.emit("fireipc_send", {
+                     "name": name,
+                     "uuid": uuid,
+                     "detail": event.detail
+                   });
+  });
+
+  // start receiving messages from addon in this channel
+  self.port.on("fireipc_recive", function(message) {
+    var ev = CustomEvent("fireipc_" + uuid, {"detail": {
+      "msg": message,
+      "sender": "addon"
+    }});
+    document.dispatchEvent(ev);
+  });
+
+  // notify the user script that the handshake is accepted
+  var ev = CustomEvent("fireipc_handshake", {"detail": {
+    "accept": true,
+    "sender": "addon"
+  }});
+  document.dispatchEvent(ev);
 });
