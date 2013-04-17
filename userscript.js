@@ -9,9 +9,9 @@
 // @version     1
 // ==/UserScript==
 
-function FireIPC() {
+function FireIPC(alias) {
   var script = GM_info["script"];
-  this.sender = script.namespace + "/" + script.name;
+  this.sender = script.namespace + "/" + (alias || script.name);
   this.secret = null;
 }
 
@@ -80,7 +80,7 @@ FireIPC.prototype.setup = function(callback) {
 }
 
 // Usage
-var fipc = new FireIPC();
+var fipc = new FireIPC("test_alias");
 fipc.setup(function(ready){
   if(!ready){
     console.log("Something goes wrong!");
