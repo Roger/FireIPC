@@ -4,7 +4,7 @@ document.addEventListener("fireipc_handshake",
     if(event.detail.sender == "addon") return;
 
     self.port.emit("handshake", event.detail);
-    // HandShake started, stop listenning for new handshakes in this worker
+    // HandShake started, stop listening for new handshakes in this worker
     document.removeEventListener("fireipc_handshake", handshake, false);
   }, false);
 
@@ -13,7 +13,7 @@ self.port.on("handshake_accept", function(message){
   var name = message.name;
   var uuid = message.uuid;
 
-  // start listenning in the new channel
+  // start listening in the new channel
   document.addEventListener("fireipc_"+message.uuid, function(event){
     // ignore self messages
     if(event.detail.sender == "addon") return;
@@ -25,7 +25,7 @@ self.port.on("handshake_accept", function(message){
   });
 
   // start receiving messages from addon in this channel
-  self.port.on("fireipc_recive", function(message) {
+  self.port.on("fireipc_receive", function(message) {
     var ev = CustomEvent("fireipc_" + uuid, {"detail": {
       "msg": message,
       "sender": "addon"

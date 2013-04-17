@@ -58,7 +58,7 @@ FireIPC.prototype.setup = function(callback) {
   var nonce = Math.random().toString(36).substr(2);
   var that = this;
   this._listen("fireipc_handshake", function(detail) {
-    var uuid = GM_getValue("handshake_uuid", null);
+    var uuid = GM_getValue("fireipc_handshake_uuid", null);
     if(uuid == null) {
       console.log("UUID is not set, invalid handshake");
       callback(false);
@@ -70,7 +70,7 @@ FireIPC.prototype.setup = function(callback) {
   }, true);
 
   // set a nonce in the config only to let the addon know this session is real
-  GM_setValue("handshake_" + nonce, true);
+  GM_setValue("fireipc_handshake_" + nonce, true);
 
   this._emit("fireipc_handshake", {
     "name": name,
@@ -83,11 +83,11 @@ FireIPC.prototype.setup = function(callback) {
 var fipc = new FireIPC();
 fipc.setup(function(ready){
   if(!ready){
-    console.log("Somthing goes wrong!");
+    console.log("Something goes wrong!");
     return
   }
   fipc.listen(function(msg){
     console.log(msg);
   })
-  fipc.emit({"data": "hello world!"});
+  fipc.emit({"message": "hello world!"});
 });
