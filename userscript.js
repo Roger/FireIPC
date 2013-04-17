@@ -1,77 +1,78 @@
 // ==UserScript==
-// @name        test
+// @name        FireIPC userscript test
 // @namespace   fireipc
 // @description Test fireipc
 // @include     http://localhost:8000/
+// @include     http://localhost/
 // @grant GM_setValue
 // @grant GM_getValue
 // @version     1
 // ==/UserScript==
 
-var fipc_config = {"secret": null};
-
-function get_sender(){
+function FireIPC() {
   var script = GM_info["script"];
-  var name = script.name;
-  var namespace = script.namespace;
-  return namespace + "/" + name;
+  this.sender = script.namespace + "/" + script.name;
+  this.secret = null;
 }
 
-function fipc_emit(name, msg) {
+FireIPC.prototype._emit = function(name, msg) {
   var ev = CustomEvent(name, {"detail":{
-    "sender": get_sender(),
+    "sender": this.sender,
     "msg": msg
   }});
   document.dispatchEvent(ev);
 }
 
-function fipc_listen(name, callback, filter_mine) {
+FireIPC.prototype._listen = function(name, callback, filter_mine) {
+  var that = this;
   document.addEventListener(name, function(event) {
     var detail = event.detail;
-    if(filter_mine && detail.sender == get_sender()) return;
+    if(filter_mine && detail.sender == that.sender) return;
     callback(detail);
   });
 }
 
-function check_setup() {
-  if(fipc_config.secret == null) {
+
+FireIPC.prototype.check_setup = function() {
+  if(this.secret == null) {
     console.log("FireIPC setup not ready!");
     return false;
   }
   return true;
 }
-function emit(msg) {
-  if (check_setup())
-    fipc_emit("fireipc_" + fipc_config.secret, msg);
+
+FireIPC.prototype.emit = function(msg) {
+  if (this.check_setup())
+    this._emit("fireipc_" + this.secret, msg);
 }
 
-function listen(callback) {
-  if (check_setup())
-    fipc_listen("fireipc_" + fipc_config.secret, callback, true);
+FireIPC.prototype.listen = function(callback) {
+  if (this.check_setup())
+    this._listen("fireipc_" + this.secret, callback, true);
 }
 
-function setupFireIPC(callback) {
+FireIPC.prototype.setup = function(callback) {
   var script = GM_info["script"];
   var name = script.name;
   var namespace = script.namespace;
   var nonce = Math.random().toString(36).substr(2);
-
-  fipc_listen("fireipc_handshake", function(detail) {
+  var that = this;
+  this._listen("fireipc_handshake", function(detail) {
     var uuid = GM_getValue("handshake_uuid", null);
     if(uuid == null) {
       console.log("UUID is not set, invalid handshake");
       callback(false);
       return;
     }
-    fipc_config.secret = uuid;
+    that.secret = uuid;
 
     callback(true);
   }, true);
 
-  // set a nonce in fipc_config only to let the addon know this session is real
+  // set a nonce in the config only to let the addon know this session is real
   GM_setValue("handshake_" + nonce, true);
 
-  fipc_emit("fireipc_handshake", {
+  this._emit("fireipc_handshake", {
     "name": name,
     "namespace": namespace,
     "nonce": nonce
@@ -79,13 +80,14 @@ function setupFireIPC(callback) {
 }
 
 // Usage
-setupFireIPC(function(ready){
+var fipc = new FireIPC();
+fipc.setup(function(ready){
   if(!ready){
     console.log("Somthing goes wrong!");
     return
   }
-  listen(function(msg){
+  fipc.listen(function(msg){
     console.log(msg);
   })
-  emit({"data": "hello world!"});
+  fipc.emit({"data": "hello world!"});
 });
