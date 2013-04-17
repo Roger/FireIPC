@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        FireIPC userscript test
+// @name        FireIPC userscript lib (with standalone mode for testing)
 // @namespace   fireipc
 // @description Test fireipc
 // @include     http://localhost:8000/
@@ -79,15 +79,19 @@ FireIPC.prototype.setup = function(callback) {
   });
 }
 
-// Usage
-var fipc = new FireIPC("test_alias");
-fipc.setup(function(ready){
-  if(!ready){
-    console.log("Something goes wrong!");
-    return
-  }
-  fipc.listen(function(msg){
-    console.log(msg);
-  })
-  fipc.emit({"message": "hello world!"});
-});
+// Usage example, doesn't run when run on @require
+
+if (GM_info.script.namespace == 'fireipc') {
+  var fipc = new FireIPC("test_alias");
+  fipc.setup(function(ready){
+    if(!ready){
+      console.log("Something goes wrong!");
+      return;
+    }
+    fipc.listen(function(msg){
+      console.log("Message received ", msg);
+    })
+    fipc.emit({"message": "hello world!"});
+    console.log("Message sent")
+  });
+}
